@@ -96,6 +96,7 @@ RavenMessage Raven::operator()(Raven::RavenLevel level, QString culprit)
     event.m_body["timestamp"]
         = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
     event.m_body["culprit"] = culprit;
+    event.m_instance = this;
     return event;
 }
 
@@ -238,6 +239,12 @@ RavenMessage& RavenMessage::operator<<(const std::exception& exc)
 RavenMessage& RavenMessage::operator<<(const RavenTag& tag)
 {
     m_tags[tag.first] = tag.second;
+    return *this;
+}
+
+RavenMessage& RavenMessage::operator<<(const RavenEnd& end)
+{
+    m_instance->capture(*this);
     return *this;
 }
 

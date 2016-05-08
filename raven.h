@@ -19,6 +19,9 @@ class Raven;
 
 using RavenTag = QPair<QString, QString>;
 
+struct RavenEnd {
+};
+
 class RavenMessage {
     QString m_logger;
     QString m_platform;
@@ -27,12 +30,17 @@ class RavenMessage {
     QJsonObject m_body;
     QJsonObject m_tags;
 
+    Raven* m_instance;
+
     friend class Raven;
+
+    friend RavenMessage& capture(RavenMessage& message);
 
 public:
     RavenMessage& operator<<(const QString& message);
     RavenMessage& operator<<(const std::exception& exc);
     RavenMessage& operator<<(const RavenTag& tag);
+    RavenMessage& operator<<(const RavenEnd& end);
 };
 
 class Raven : public QObject {
