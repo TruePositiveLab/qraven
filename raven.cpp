@@ -13,8 +13,9 @@
 const static QNetworkRequest::Attribute RavenUuidAttribute
     = static_cast<QNetworkRequest::Attribute>(QNetworkRequest::User + 19);
 
-Raven::Raven(const QString& dsn)
-    : m_initialized(false)
+Raven::Raven(const QString& dsn, QObject* parent)
+    : QObject(parent)
+    , m_initialized(false)
     , m_networkAccessManager(new QNetworkAccessManager(this))
 {
     m_eventTemplate["server_name"] = QHostInfo::localHostName();

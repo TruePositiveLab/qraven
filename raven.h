@@ -71,7 +71,7 @@ private slots:
 
 public:
     enum RavenLevel { Fatal, Error, Warning, Info, Debug };
-    Raven(const QString& dsn);
+    Raven(const QString& dsn, QObject* parent = 0);
     ~Raven();
     RavenMessage operator()(RavenLevel level, QString culprit);
 
