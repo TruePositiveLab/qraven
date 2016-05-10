@@ -19,6 +19,7 @@ Raven::Raven(const QString& dsn)
     m_eventTemplate["server_name"] = QHostInfo::localHostName();
     m_eventTemplate["logger"] = RAVEN_CLIENT_NAME;
     m_eventTemplate["platform"] = "c";
+    m_eventTemplate["release"] = QCoreApplication::applicationVersion();
     parseDsn(dsn);
     connect(m_networkAccessManager, &QNetworkAccessManager::finished, this,
         &Raven::requestFinished);
@@ -102,6 +103,9 @@ RavenMessage Raven::operator()(Raven::RavenLevel level, QString culprit)
 
 bool Raven::isInitialized() const { return m_initialized; }
 
+static const QList<QString> _requiredAttributes = { "event_id", "message",
+    "timestamp", "level", "logger", "platform", "sdk", "device" };
+
 void Raven::capture(const RavenMessage& message)
 {
     if (!isInitialized())
@@ -109,6 +113,11 @@ void Raven::capture(const RavenMessage& message)
 
     QJsonObject body = QJsonObject(message.m_body);
     body["tags"] = message.m_tags;
+
+    for (const auto& attributeName : _requiredAttributes) {
+        Q_ASSERT(body.contains(attributeName));
+    }
+
     send(body);
 }
 
@@ -196,6 +205,17 @@ void Raven::save(const QString& uuid, QByteArray& message)
     }
 }
 
+RavenMessage& Raven::send(RavenMessage& message)
+{
+    message.m_instance->capture(message);
+    return message;
+}
+
+RavenTag Raven::tag(const QString& name, const QString& value)
+{
+    return RavenTag(name, value);
+}
+
 void Raven::sendAllPending()
 {
     QString messageDir = QStandardPaths::writableLocation(
@@ -242,10 +262,9 @@ RavenMessage& RavenMessage::operator<<(const RavenTag& tag)
     return *this;
 }
 
-RavenMessage& RavenMessage::operator<<(const RavenEnd& end)
+RavenMessage& RavenMessage::operator<<(RavenMessage& (*pf)(RavenMessage&))
 {
-    m_instance->capture(*this);
-    return *this;
+    return (*pf)(*this);
 }
 
 QString Raven::locationInfo(const char* file, const char* func, int line)

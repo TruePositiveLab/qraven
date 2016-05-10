@@ -7,6 +7,6 @@ int main(int argc, char** argv)
     QObject::connect(&raven, &Raven::eventSent, &app, &QCoreApplication::quit);
     raven(RAVEN_INFO)
         << QString("This is a test message generated using ``raven test``")
-        << RavenTag("test", "test tag") << RavenEnd();
+        << Raven::tag("test", "test tag") << Raven::send;
     return app.exec();
 }

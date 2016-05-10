@@ -19,9 +19,6 @@ class Raven;
 
 using RavenTag = QPair<QString, QString>;
 
-struct RavenEnd {
-};
-
 class RavenMessage {
     QString m_logger;
     QString m_platform;
@@ -40,7 +37,7 @@ public:
     RavenMessage& operator<<(const QString& message);
     RavenMessage& operator<<(const std::exception& exc);
     RavenMessage& operator<<(const RavenTag& tag);
-    RavenMessage& operator<<(const RavenEnd& end);
+    RavenMessage& operator<<(RavenMessage& (*pf)(RavenMessage&));
 };
 
 class Raven : public QObject {
@@ -84,6 +81,9 @@ public:
 
     void capture(const RavenMessage& message);
     void sendAllPending();
+
+    static RavenMessage& send(RavenMessage& message);
+    static RavenTag tag(const QString& name, const QString& value);
 
 signals:
     void eventSent(const QString& uuid);
