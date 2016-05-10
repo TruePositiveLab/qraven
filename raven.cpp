@@ -101,6 +101,12 @@ RavenMessage Raven::operator()(Raven::RavenLevel level, QString culprit)
     return event;
 }
 
+Raven* Raven::operator<<(const RavenTag& tag)
+{
+    m_tagsTemplate[tag.first] = tag.second;
+    return this;
+}
+
 bool Raven::isInitialized() const { return m_initialized; }
 
 static const QList<QString> _requiredAttributes = { "event_id", "message",

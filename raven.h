@@ -85,6 +85,7 @@ public:
     static RavenMessage& send(RavenMessage& message);
     static RavenTag tag(const QString& name, const QString& value);
 
+    Raven* operator<<(const RavenTag& tag);
 signals:
     void eventSent(const QString& uuid);
 };
