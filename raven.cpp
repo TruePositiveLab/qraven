@@ -5,6 +5,7 @@
 #include <QUrl>
 #include <QNetworkRequest>
 #include <QNetworkReply>
+#include <QSysInfo>
 
 #define RAVEN_CLIENT_NAME QString("QRaven")
 #define RAVEN_CLIENT_VERSION QString("0.1")
@@ -20,6 +21,8 @@ Raven::Raven(const QString& dsn)
     m_eventTemplate["logger"] = RAVEN_CLIENT_NAME;
     m_eventTemplate["platform"] = "c";
     m_eventTemplate["release"] = QCoreApplication::applicationVersion();
+    m_tagsTemplate["os_type"] = QSysInfo::productType();
+    m_tagsTemplate["os_version"] = QSysInfo::productVersion();
     parseDsn(dsn);
     connect(m_networkAccessManager, &QNetworkAccessManager::finished, this,
         &Raven::requestFinished);
@@ -131,7 +134,7 @@ void Raven::send(QJsonObject& message)
 {
     QString clientInfo
         = QString("%1/%2").arg(RAVEN_CLIENT_NAME, RAVEN_CLIENT_VERSION);
-    QString authInfo = QString("Sentry sentry_version=5,"
+    QString authInfo = QString("Sentry sentry_version=7,"
                                "sentry_client=%1,"
                                "sentry_timestamp=%2,"
                                "sentry_key=%3,"
