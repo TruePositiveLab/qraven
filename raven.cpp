@@ -113,8 +113,9 @@ Raven* Raven::operator<<(const RavenTag& tag)
 
 bool Raven::isInitialized() const { return m_initialized; }
 
-static const QList<QString> _requiredAttributes = { "event_id", "message",
-    "timestamp", "level", "logger", "platform", "sdk", "device" };
+static const QList<QString> _requiredAttributes
+    = { "event_id", "message", "timestamp", "level", "logger", "platform",
+        /* "sdk", "device" */ };
 
 void Raven::capture(const RavenMessage& message)
 {
