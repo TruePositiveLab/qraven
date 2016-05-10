@@ -39,6 +39,7 @@ public:
     RavenMessage& operator<<(const RavenTag& tag);
     RavenMessage& operator<<(RavenMessage& (*pf)(RavenMessage&));
 };
+Q_DECLARE_METATYPE(RavenMessage)
 
 class Raven : public QObject {
     Q_OBJECT
@@ -59,15 +60,17 @@ class Raven : public QObject {
 
     QMap<QString, QByteArray> m_pendingRequest;
     QMutex m_pendingMutex;
-
     void parseDsn(const QString& dsn);
 
     void save(const QString& uuid, QByteArray& message);
     void send(QJsonObject& message);
 
+    void _capture(const RavenMessage& message);
+    void _sendAllPending();
 private slots:
     void requestFinished(QNetworkReply* reply);
     void sslErrors(QNetworkReply* reply, const QList<QSslError>& errors);
+
 
 public:
     enum RavenLevel { Fatal, Error, Warning, Info, Debug };
@@ -79,8 +82,6 @@ public:
 
     bool isInitialized() const;
 
-    void capture(const RavenMessage& message);
-    void sendAllPending();
 
     static RavenMessage& send(RavenMessage& message);
     static RavenTag tag(const QString& name, const QString& value);
@@ -88,4 +89,7 @@ public:
     Raven* operator<<(const RavenTag& tag);
 signals:
     void eventSent(const QString& uuid);
+    void capture(const RavenMessage& message);
+    void sendAllPending();
+
 };

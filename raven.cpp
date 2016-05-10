@@ -29,6 +29,8 @@ Raven::Raven(const QString& dsn, QObject* parent)
         &Raven::requestFinished);
     connect(m_networkAccessManager, &QNetworkAccessManager::sslErrors, this,
         &Raven::sslErrors);
+    connect(this, &Raven::capture, this, &Raven::_capture, Qt::QueuedConnection);
+    connect(this, &Raven::sendAllPending, this, &Raven::_sendAllPending, Qt::QueuedConnection);
 }
 
 Raven::~Raven()
@@ -117,7 +119,7 @@ static const QList<QString> _requiredAttributes
     = { "event_id", "message", "timestamp", "level", "logger", "platform",
         /* "sdk", "device" */ };
 
-void Raven::capture(const RavenMessage& message)
+void Raven::_capture(const RavenMessage& message)
 {
     if (!isInitialized())
         return;
@@ -229,7 +231,7 @@ RavenTag Raven::tag(const QString& name, const QString& value)
     return RavenTag(name, value);
 }
 
-void Raven::sendAllPending()
+void Raven::_sendAllPending()
 {
     QString messageDir = QStandardPaths::writableLocation(
         QStandardPaths::AppLocalDataLocation);
