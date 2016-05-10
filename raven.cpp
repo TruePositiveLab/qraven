@@ -7,6 +7,9 @@
 #include <QNetworkReply>
 #include <QSysInfo>
 
+#include <dlfcn.h>
+#include <execinfo.h>
+
 #define RAVEN_CLIENT_NAME QString("QRaven")
 #define RAVEN_CLIENT_VERSION QString("0.1")
 
@@ -29,8 +32,10 @@ Raven::Raven(const QString& dsn, QObject* parent)
         &Raven::requestFinished);
     connect(m_networkAccessManager, &QNetworkAccessManager::sslErrors, this,
         &Raven::sslErrors);
-    connect(this, &Raven::capture, this, &Raven::_capture, Qt::QueuedConnection);
-    connect(this, &Raven::sendAllPending, this, &Raven::_sendAllPending, Qt::QueuedConnection);
+    connect(
+        this, &Raven::capture, this, &Raven::_capture, Qt::QueuedConnection);
+    connect(this, &Raven::sendAllPending, this, &Raven::_sendAllPending,
+        Qt::QueuedConnection);
 }
 
 Raven::~Raven()
@@ -107,10 +112,10 @@ RavenMessage Raven::operator()(Raven::RavenLevel level, QString culprit)
     return event;
 }
 
-Raven* Raven::operator<<(const RavenTag& tag)
+Raven& Raven::operator<<(const RavenTag& tag)
 {
     m_tagsTemplate[tag.first] = tag.second;
-    return this;
+    return *this;
 }
 
 bool Raven::isInitialized() const { return m_initialized; }
@@ -264,10 +269,61 @@ RavenMessage& RavenMessage::operator<<(const QString& message)
     m_body["message"] = message;
     return *this;
 }
+#include <cxxabi.h>
+
+using namespace __cxxabiv1;
+
+QString util_demangle(std::string to_demangle)
+{
+    int status = 0;
+    char* buff
+        = __cxxabiv1::__cxa_demangle(to_demangle.c_str(), NULL, NULL, &status);
+    QString demangled(buff);
+    free(buff);
+
+    if (demangled.isEmpty()) {
+        return QString::fromStdString(to_demangle);
+    }
+    return demangled;
+}
 
 RavenMessage& RavenMessage::operator<<(const std::exception& exc)
 {
     m_body["message"] = exc.what();
+    QJsonArray frameList;
+    void* callstack[128];
+    int i, frames = backtrace(callstack, 128);
+    QString moduleName;
+    for (i = 0; i < frames; ++i) {
+        QJsonObject frame;
+        Dl_info dlinfo;
+        if (dladdr(callstack[i], &dlinfo) == 0)
+            continue;
+        if (i == 0) {
+            moduleName = dlinfo.dli_fname;
+            continue;
+        }
+        frame["function"] = util_demangle(dlinfo.dli_sname);
+        frame["module"] = dlinfo.dli_fname;
+        frame["in_app"] = false;
+        frameList.push_back(frame);
+    }
+    QJsonObject frameHash;
+    frameHash["frames"] = frameList;
+
+    QJsonObject _exc;
+    _exc["type"] = util_demangle(__cxa_current_exception_type()->name());
+    _exc["stacktrace"] = frameHash;
+    _exc["module"] = moduleName;
+    _exc["value"] = exc.what();
+
+    QJsonArray values;
+    values.push_back(_exc);
+
+    QJsonObject exceptionReport;
+    exceptionReport["values"] = values;
+
+    m_body["exception"] = values;
     return *this;
 }
 

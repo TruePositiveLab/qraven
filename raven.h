@@ -71,7 +71,6 @@ private slots:
     void requestFinished(QNetworkReply* reply);
     void sslErrors(QNetworkReply* reply, const QList<QSslError>& errors);
 
-
 public:
     enum RavenLevel { Fatal, Error, Warning, Info, Debug };
     Raven(const QString& dsn, QObject* parent = 0);
@@ -82,14 +81,12 @@ public:
 
     bool isInitialized() const;
 
-
     static RavenMessage& send(RavenMessage& message);
     static RavenTag tag(const QString& name, const QString& value);
 
-    Raven* operator<<(const RavenTag& tag);
+    Raven& operator<<(const RavenTag& tag);
 signals:
     void eventSent(const QString& uuid);
     void capture(const RavenMessage& message);
     void sendAllPending();
-
 };
