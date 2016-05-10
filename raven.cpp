@@ -194,6 +194,8 @@ void Raven::requestFinished(QNetworkReply* reply)
 
 void Raven::sslErrors(QNetworkReply* reply, const QList<QSslError>& errors)
 {
+    Q_UNUSED(reply)
+    Q_UNUSED(errors)
     reply->ignoreSslErrors();
 }
 
