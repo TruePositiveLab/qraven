@@ -7,8 +7,12 @@
 #include <QNetworkReply>
 #include <QSysInfo>
 
+#include <ctime>
+
+#ifndef Q_OS_WIN
 #include <dlfcn.h>
 #include <execinfo.h>
+#endif
 
 #define RAVEN_CLIENT_NAME QString("QRaven")
 #define RAVEN_CLIENT_VERSION QString("0.1")
@@ -269,12 +273,17 @@ RavenMessage& RavenMessage::operator<<(const QString& message)
     m_body["message"] = message;
     return *this;
 }
+
+#ifndef Q_OS_WIN
 #include <cxxabi.h>
 
 using namespace __cxxabiv1;
-
+#endif
 QString util_demangle(std::string to_demangle)
 {
+#ifdef Q_OS_WIN
+    return QString::fromStdString(to_demangle);
+#else
     int status = 0;
     char* buff
         = __cxxabiv1::__cxa_demangle(to_demangle.c_str(), NULL, NULL, &status);
@@ -285,11 +294,13 @@ QString util_demangle(std::string to_demangle)
         return QString::fromStdString(to_demangle);
     }
     return demangled;
+#endif
 }
 
 RavenMessage& RavenMessage::operator<<(const std::exception& exc)
 {
     m_body["message"] = exc.what();
+#ifndef Q_OS_WIN
     QJsonArray frameList;
     void* callstack[128];
     int i, frames = backtrace(callstack, 128);
@@ -324,6 +335,7 @@ RavenMessage& RavenMessage::operator<<(const std::exception& exc)
     exceptionReport["values"] = values;
 
     m_body["exception"] = values;
+#endif
     return *this;
 }
 
