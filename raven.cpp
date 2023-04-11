@@ -11,7 +11,9 @@
 
 #ifndef Q_OS_WIN
 #include <dlfcn.h>
+#ifndef Q_OS_ANDROID
 #include <execinfo.h>
+#endif
 #endif
 
 #define RAVEN_CLIENT_NAME QString("QRaven")
@@ -302,6 +304,7 @@ RavenMessage& RavenMessage::operator<<(const std::exception& exc)
     m_body["message"] = exc.what();
 #ifndef Q_OS_WIN
     QJsonArray frameList;
+#ifndef Q_OS_ANDROID
     void* callstack[128];
     int i, frames = backtrace(callstack, 128);
     QString moduleName;
@@ -319,6 +322,9 @@ RavenMessage& RavenMessage::operator<<(const std::exception& exc)
         frame["in_app"] = false;
         frameList.push_back(frame);
     }
+#else
+    QString moduleName = "<UNKNOWN>";
+#endif
     QJsonObject frameHash;
     frameHash["frames"] = frameList;
 
